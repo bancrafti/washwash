@@ -1,15 +1,9 @@
+<script setup lang="ts">
+import NavigationBar from '@/components/NavigationBar.vue';
+</script>
+
 <template>
-  <div id="navigation-bar" class="container">
-    <div id="logo">W.</div>
-    <div id="pages">
-      <router-link to="/"><div id="home" class="nav">Home</div></router-link>
-
-      <div id="cart" class="nav">Cart</div>
-      <router-link to="/about"><div id="about" class="nav">About</div></router-link>
-
-      <div id="contact" class="nav">Contact</div>
-    </div>
-  </div>
+  <NavigationBar/>
   <div id="headline" class="container">
     <img src="C:\Users\waribu\Desktop\war\washwash\washwash\src\assets\images\wash.jpg" alt="A washing machine image" style="width: 100%;">
     <div id="headline-text" class="text">Laundry Made Simple</div>
