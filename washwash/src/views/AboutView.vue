@@ -1,3 +1,9 @@
+<script setup lang="ts">
+import NavigationBar from '@/components/NavigationBar.vue';
+
+</script>
+
 <template>
-  <h2>About</h2>
+  <NavigationBar/>
+  <h1>About</h1>
 </template>
