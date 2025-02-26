@@ -1,6 +1,9 @@
 body{
   background-color: rgb(225, 211, 211);
 }
+*{
+  text-decoration: none;
+}
 /*Navigation Bar*/
 #navigation-bar{
   display: flex;
@@ -16,9 +19,10 @@ body{
 }
 .nav{
   font-size: 1.5em;
-  font-weight: lighter;
+  font-weight: bold;
+  color: black;
+  text-decoration: none;
 }
-
 /* Logo */
 #logo{
   font-size: 2em;
@@ -39,18 +43,19 @@ body{
   position: relative;
   text-align: center;
   width: 100%;
-  height: auto;
+  height: 85vh;
   object-fit: contain;
 }
 #headline-text{
   position: absolute;
   width: 1em;
   top: 0.2em;
-  right: 2.8em;
+  right: 2.99em;
   text-align: end;
   color: rgb(255, 255, 255);
   font-weight: bold;
-  font-size: 11em; 
+  font-size: clamp(3.8rem, 12vw, 25em);
+  font-family:Arial, Helvetica, sans-serif;
 }
 /* Button */
 #book-now{
@@ -60,6 +65,7 @@ body{
   width: 7em;
   height:2.2em;
   font-size: 2em;
+  font-weight: bold;
   transform: translate(-50%,-50%);
   border-radius: 3em;
   border: solid white;
@@ -90,7 +96,41 @@ img{
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 3em;
+  font-size: 1em;
   color: white;
   font-weight: bolder;
+}
+
+/* Navigation links*/
+#nav-links {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background-color: #f8f9fa;
+}
+
+#logo {
+  font-size: 24px;
+  font-weight: bolder;
+  text-decoration: none;
+  color: #333;
+}
+
+#links {
+  display: flex;
+  gap: 20px;
+}
+
+#links a {
+  text-decoration: none;
+  color: #000000;
+  font-size: 18px;
+  transition: color 0.3s ease-in-out;
+}
+
+#links a:hover,
+.active-link {
+  color:palevioletred;
+  font-weight: bold;
 }

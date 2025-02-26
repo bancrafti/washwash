@@ -1,10 +1,13 @@
 <template>
-<div id="navigation-bar" class="container">
-  <div id="logo">W.</div>
-  <div id="pages">
-    <router-link to="/"><div id="home" class="nav">Home</div></router-link>
-    <router-link to="/about"><div id="about" class="nav">About</div></router-link>
-    <router-link to="/contact"><div id="contact" class="nav">Contact</div></router-link>
-  </div>
-</div>
+  <nav id="nav-links">
+    <router-link to="/" id="logo">W.</router-link>
+    <div id="links">
+      <router-link to="/" active-class="active-link">Home</router-link>
+      <router-link to="/about" active-class="active-link">About</router-link>
+      <router-link to="/contact" active-class="active-link">Contact</router-link>
+      <router-link to="/login" active-class="active-link">Login</router-link>
+    </div>
+  </nav>
 </template>
+
+  
