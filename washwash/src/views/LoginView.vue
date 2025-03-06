@@ -30,7 +30,7 @@ import NewtonCradle from "@/components/NewtonCradle.vue";
         <a href="#">Forgot Password?</a>
         <p>
           Don't have an account?
-          <a href="#">Sign up</a>
+          <router-link to="/signup" active-class="active-link">Sign Up</router-link>
         </p>
       </div>
     </div>
@@ -119,7 +119,7 @@ import NewtonCradle from "@/components/NewtonCradle.vue";
 /* 🔘 Login Button */
 .login-btn {
   width: 100%;
-  padding: 12px;
+  padding: 12px 2px;
   background: #2563eb;
   color: white;
   font-weight: bold;
