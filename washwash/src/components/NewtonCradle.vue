@@ -44,7 +44,7 @@ onMounted(() => {
                 friction: 0,
                 frictionAir: 0,
                 slop: size * 0.02,
-                render: { fillStyle: "black" }
+                render: { fillStyle: "#1e3a8a" }
             });
 
             const rope = Constraint.create({

@@ -3,44 +3,47 @@ import NewtonCradle from "@/components/NewtonCradle.vue";
 </script>
 
 <template>
-  <div class="login-container">
-
+  <div class="signup-container">
     <!-- Newton's Cradle at the Top -->
     <div class="cradle-wrapper">
       <NewtonCradle />
     </div>
 
-    <!-- Login Form -->
-    <div class="login-card">
-      <h1 class="title">Welcome Back</h1>
-      <p class="subtitle">Enter your credentials to sign in</p>
+    <!-- Signup Form -->
+    <div class="signup-card">
+      <h1 class="title">Create Account</h1>
+      <p class="subtitle">Join us today by filling in your details</p>
 
       <div class="form">
-        <label for="username">Email</label>
-        <input type="text" placeholder="Enter your email">
+        <label for="name">Full Name</label>
+        <input type="text" placeholder="Enter your full name">
+
+        <label for="email">Email</label>
+        <input type="email" placeholder="Enter your email">
 
         <label for="password">Password</label>
-        <input type="password" placeholder="Enter your password">
+        <input type="password" placeholder="Create a password">
 
-        <button type="submit" class="login-btn">Login</button>
+        <label for="confirm-password">Confirm Password</label>
+        <input type="password" placeholder="Confirm your password">
+
+        <button type="submit" class="signup-btn">Sign Up</button>
       </div>
 
       <!-- Extra Links -->
       <div class="extra-links">
-        <a href="#">Forgot Password?</a>
         <p>
-          Don't have an account?
-          <router-link to="/signup" active-class="active-link">Sign Up</router-link>
+          Already have an account?
+          <router-link to="/login" active-class="active-link">Login</router-link>
         </p>
       </div>
     </div>
-
   </div>
 </template>
 
 <style scoped>
 /* 🌟 Background Styling */
-.login-container {
+.signup-container {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -60,11 +63,11 @@ import NewtonCradle from "@/components/NewtonCradle.vue";
   height: 120px;
   overflow: hidden;
   margin-top: 10px;
-  margin-bottom: 8em; /* Increased spacing between cradle and login form */
+  margin-bottom: 6em; /* Adjusted spacing between cradle and signup form */
 }
 
-/* ✨ Glassmorphism Login Card */
-.login-card {
+/* ✨ Glassmorphism Signup Card */
+.signup-card {
   background: rgba(255, 255, 255, 0.3);
   backdrop-filter: blur(15px);
   border-radius: 12px;
@@ -116,8 +119,8 @@ import NewtonCradle from "@/components/NewtonCradle.vue";
   box-shadow: 0 0 8px rgba(37, 99, 235, 0.3);
 }
 
-/* 🔘 Login Button */
-.login-btn {
+/* 🔘 Signup Button */
+.signup-btn {
   width: 100%;
   padding: 12px 2px;
   background: #2563eb;
@@ -130,7 +133,7 @@ import NewtonCradle from "@/components/NewtonCradle.vue";
   transition: all 0.3s ease-in-out;
 }
 
-.login-btn:hover {
+.signup-btn:hover {
   background: #1e40af;
   transform: translateY(-2px);
 }
@@ -156,5 +159,4 @@ import NewtonCradle from "@/components/NewtonCradle.vue";
   color: #374151;
   font-size: 14px;
 }
-
 </style>
