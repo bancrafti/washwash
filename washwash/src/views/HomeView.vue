@@ -13,12 +13,6 @@ import NavigationBar from '@/components/NavigationBar.vue';
     </div>
   </section>
 
-  <section class="services-container">
-    <div class="service" v-for="(service, index) in services" :key="index">
-      <img :src="service.image" :alt="service.name">
-      <div class="description">{{ service.name }}</div>
-    </div>
-  </section>
 </template>
 
 <style scoped>
