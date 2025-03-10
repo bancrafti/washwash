@@ -21,7 +21,7 @@ import NavigationBar from '@/components/NavigationBar.vue';
   margin-top: 1em;
   position: relative;
   width: 100%;
-  height: 80vh;
+  height: 90vh;
   display: flex;
   align-items: center;
   justify-content: center;
