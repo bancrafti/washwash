@@ -9,11 +9,13 @@ import NavigationBar from '@/components/NavigationBar.vue';
     <img src="@/assets/images/wash.jpg" alt="A washing machine image">
     <div class="overlay">
       <h1>Laundry Made Simple</h1>
-      <button class="book-now">Book Now</button>
+      <router-link to="/services">
+        <button class="book-now">Book Now</button>
+      </router-link>
     </div>
   </section>
-
 </template>
+
 
 <style scoped>
 /* Headline Section */
@@ -51,7 +53,7 @@ import NavigationBar from '@/components/NavigationBar.vue';
 .book-now {
   padding: 0.8em 1.5em;
   font-size: 1.2rem;
-  font-weight: bold;
+  font-weight: bolder1;
   border: 2px solid white;
   color: white;
   background: transparent;
