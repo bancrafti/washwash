@@ -1,5 +1,17 @@
 <?php
 require_once('../config/db.php');
+
+// Set CORS headers
+header("Access-Control-Allow-Origin: *");  
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+
+// Handle pre-flight requests (OPTIONS request)
+if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
 $data = json_decode(file_get_contents("php://input"));
 
 if (!isset($data->email) || !isset($data->password)) {

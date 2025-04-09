@@ -10,6 +10,10 @@ const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 
+// Message and display state
+const message = ref('')
+const messageType = ref('') // "success" or "error"
+
 // Function to validate email format
 const isValidEmail = (email) => {
   const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
@@ -22,19 +26,19 @@ const router = useRouter()
 const handleSignup = async () => {
   // Check for empty fields
   if (!username.value || !email.value || !password.value || !confirmPassword.value) {
-    alert("All fields are required!");
+    showMessage("All fields are required!", "error");
     return;
   }
 
   // Check if email is valid
   if (!isValidEmail(email.value)) {
-    alert("Please enter a valid email address!");
+    showMessage("Please enter a valid email address!", "error");
     return;
   }
 
   // Check if passwords match
   if (password.value !== confirmPassword.value) {
-    alert("Passwords do not match.");
+    showMessage("Passwords do not match.", "error");
     return;
   }
 
@@ -59,10 +63,12 @@ const handleSignup = async () => {
 
     // Check if the status code is 201 (Created) for successful signup
     if (response.status === 201) {
-      alert("Signup successful! You can now log in.");
+      showMessage("Signup successful!", "success");
 
-      // Redirect to login page
-      router.push('/login');
+      // Redirect to login page after 2 seconds
+      setTimeout(() => {
+        router.push('/');
+      }, 2000);
     }
   } catch (error) {
     console.error("Signup error:", error);
@@ -74,23 +80,31 @@ const handleSignup = async () => {
       // Map the status code to a custom error message
       switch (statusCode) {
         case 409:
-          alert("Signup failed: Email already registered.");
+          showMessage("Signup failed: Email already registered.", "error");
           break;
         case 400:
-          alert("Signup failed: Invalid input. Please check your details.");
+          showMessage("Signup failed: Invalid input. Please check your details.", "error");
           break;
         case 500:
-          alert("Signup failed: Server error. Please try again later.");
+          showMessage("Signup failed: Server error. Please try again later.", "error");
           break;
         default:
-          alert(`Signup failed with status code: ${statusCode}`);
+          showMessage(`Signup failed with status code: ${statusCode}`, "error");
       }
     } else {
-      alert("An error occurred during signup. Please try again.");
+      showMessage("An error occurred during signup. Please try again.", "error");
     }
   }
 };
 
+// Function to show message for a few seconds
+const showMessage = (msg, type) => {
+  message.value = msg;
+  messageType.value = type;
+  setTimeout(() => {
+    message.value = ''; // Clear message after 3 seconds
+  }, 3000);
+};
 </script>
 
 <template>
@@ -127,6 +141,11 @@ const handleSignup = async () => {
           Already have an account?
           <router-link to="/login" active-class="active-link">Login</router-link>
         </p>
+      </div>
+
+      <!-- Status Message -->
+      <div v-if="message" :class="['status-message', messageType]">
+        {{ message }}
       </div>
     </div>
   </div>
@@ -264,5 +283,28 @@ const handleSignup = async () => {
   margin-top: 5px;
   color: #374151;
   font-size: 14px;
+}
+
+/* 🔔 Status Message */
+.status-message
+{
+  margin-top: 20px;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: bold;
+  text-align: center;
+  transition: opacity 0.5s ease;
+}
+
+.status-message.success
+{
+  background-color: #4caf50;
+  color: white;
+}
+
+.status-message.error
+{
+  background-color: #f44336;
+  color: white;
 }
 </style>
