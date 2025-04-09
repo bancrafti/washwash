@@ -67,7 +67,7 @@ const handleSignup = async () => {
 
       // Redirect to login page after 2 seconds
       setTimeout(() => {
-        router.push('/');
+        router.push('/home');
       }, 2000);
     }
   } catch (error) {

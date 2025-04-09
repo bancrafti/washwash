@@ -43,7 +43,7 @@ const handleLogin = async () => {
     if (response.status == 200) {
       // If login is successful, show success message
       displayMessage("Login successful!", "success");
-      setTimeout(() => router.push('/'), 2000);  // Redirect after 2 seconds
+      setTimeout(() => router.push('/home'), 2000);  // Redirect after 2 seconds
     } else {
       // Show error message
       displayMessage("Login failed: " + response.data.message, "error");
