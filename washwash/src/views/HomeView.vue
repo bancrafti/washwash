@@ -67,45 +67,6 @@ import NavigationBar from '@/components/NavigationBar.vue';
   color: black;
 }
 
-/* Services Section */
-.services-container {
-  display: grid;
-  gap: 1em;
-  margin: 2em auto;
-  padding: 0 1em;
-  max-width: 1200px;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-}
-
-.service {
-  position: relative;
-  border-radius: 0.5em;
-  overflow: hidden;
-  background: black;
-}
-
-.service img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.service:hover img {
-  transform: scale(1.05);
-}
-
-.description {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: white;
-  font-weight: bold;
-  font-size: 1.5rem;
-  text-align: center;
-}
-
 /* Responsive Adjustments */
 @media (max-width: 768px) {
   #headline {
