@@ -6,6 +6,7 @@ import LoginView from '@/views/LoginView.vue'
 import SignUpView from '@/views/SignUpView.vue'
 import ServicesView from '@/views/ServicesView.vue'
 import GarmentSelector from '@/views/GarmentSelector.vue'
+import ThankYouView from '@/views/ThankYouView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -44,6 +45,11 @@ const router = createRouter({
       path:'/garment',
       name:'garment-selector',
       component:GarmentSelector
+    },
+    {
+      path:'/thankyou',
+      name:'thankyou',
+      component:ThankYouView
     }
 
   ],
