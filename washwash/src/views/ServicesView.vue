@@ -1,655 +1,462 @@
 <template>
-  <div class="services-page">
-    <div class="services-page__sidebar">
-      <div class="brand-container">
-        <h1 class="brand-container__heading">Fresh & Clean</h1>
-        <p class="brand-container__tagline">Professional Laundry Services</p>
-      </div>
+  <div class="laundry-app">
+    <!-- Service Selection Screen -->
+    <div v-if="currentScreen === 'services'" class="service-screen">
+      <h2>Laundry Services</h2>
+      <p class="intro-text">Select from our professional laundry services below:</p>
 
-      <div class="services-list">
-        <div
-          v-for="(service, index) in services"
-          :key="index"
-          class="service-card"
-          :class="{ 'service-card--active': selectedServiceIndex === index }"
-          @click="selectService(index)"
-          role="button"
-          tabindex="0"
-          @keydown.enter="selectService(index)"
-          @keydown.space.prevent="selectService(index)"
-        >
-          <div class="service-card__icon">
-            <span :class="service.icon" aria-hidden="true"></span>
-          </div>
-          <div class="service-card__info">
-            <h2 class="service-card__title">{{ service.name }}</h2>
-            <p class="service-card__brief">{{ service.brief }}</p>
-          </div>
+      <div class="service-grid">
+        <div v-for="service in availableServices" :key="service.id" class="service-card">
+          <h3>{{ service.name }}</h3>
+          <p>{{ service.description }}</p>
+          <button @click="selectService(service)" class="service-button">Select Service</button>
         </div>
       </div>
 
-      <div class="contact-info">
-        <p><span class="fas fa-phone contact-info__icon" aria-hidden="true"></span> 720 786 078</p>
-        <p><span class="fas fa-clock contact-info__icon" aria-hidden="true"></span> Open 7AM - 9PM</p>
+      <div v-if="cart.length > 0" class="cart-summary">
+        <h3>Current Order</h3>
+        <div v-for="(serviceOrder, index) in cart" :key="index" class="cart-item">
+          <h4>{{ serviceOrder.service.name }}</h4>
+          <div v-for="item in serviceOrder.items" :key="item.id" class="cart-item-detail">
+            <span v-if="item.quantity > 0">{{ item.name }} x {{ item.quantity }}</span>
+          </div>
+        </div>
+        <p class="cart-total">Total: Ksh {{ totalOrderCost }}</p>
+        <div class="action-buttons">
+          <button @click="proceedToCheckout" class="primary-button">Complete Order</button>
+          <button @click="cancelOrder" class="secondary-button">Cancel Order</button>
+        </div>
       </div>
     </div>
 
-    <div class="services-page__details">
-      <transition name="fade" mode="out-in">
-        <div v-if="selectedServiceData" :key="selectedServiceIndex" class="details-content">
-          <div class="details-header">
-            <h1 class="details-header__heading">{{ selectedServiceData.name }}</h1>
-            <div class="details-header__highlights">
-              <span v-for="(highlight, i) in selectedServiceData.highlights" :key="i" class="highlight-badge">
-                {{ highlight }}
-              </span>
+    <!-- Service Modal -->
+    <div v-if="selectedService && currentScreen === 'modal'" class="modal-overlay">
+      <div class="modal-box">
+        <h3>{{ selectedService.name }} Service</h3>
+        <p>{{ selectedService.description }}</p>
+
+        <div class="items-grid">
+          <div v-for="(item, index) in currentItems" :key="index" class="item-row">
+            <div class="item-info">
+              <span class="item-name">{{ item.name }}</span>
+              <span class="item-price">Ksh {{ item.price }}</span>
+              <span v-if="item.description" class="item-description">{{ item.description }}</span>
             </div>
-          </div>
-
-          <div class="details-image-container">
-            <img :src="selectedServiceData.image" :alt="selectedServiceData.name" class="details-image-container__image" />
-          </div>
-
-          <div class="details-text">
-            <p v-for="(paragraph, i) in selectedServiceData.description" :key="i" class="details-text__paragraph">
-              {{ paragraph }}
-            </p>
-
-            <div class="service-features">
-              <h3 class="service-features__title">What's included:</h3>
-              <div class="service-features__grid">
-                <div v-for="(feature, i) in selectedServiceData.features" :key="i" class="feature-item">
-                  <div class="feature-item__icon">
-                    <span class="fas fa-check" aria-hidden="true"></span>
-                  </div>
-                  <div class="feature-item__text">{{ feature }}</div>
-                </div>
-              </div>
+            <div class="item-controls">
+              <button @click="decrementQuantity(item)" class="quantity-btn">-</button>
+              <input v-model.number="item.quantity" type="number" min="0" class="quantity-input" />
+              <button @click="incrementQuantity(item)" class="quantity-btn">+</button>
             </div>
-
-            <div class="cta-container">
-               <router-link :to="{ path: '/garment', query: { service: selectedServiceIndex } }">
-                <button class="cta-button cta-button--primary">
-                    <span class="fas fa-calendar-check" aria-hidden="true"></span> Book Now
-                </button>
-              </router-link>
-              </div>
           </div>
         </div>
-         <div v-else>
-            <p>Loading service details...</p>
-            </div>
-      </transition>
+
+        <div class="service-total">
+          <p>Service Total: Ksh {{ currentServiceTotal }}</p>
+        </div>
+
+        <div class="modal-actions">
+          <button @click="addToCart" class="primary-button">Add to Order</button>
+          <button @click="closeModal" class="secondary-button">Cancel</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
-<script>
-import { ref, watch, onMounted, computed } from 'vue'; // Using Composition API for reactivity
-import { useRoute, useRouter } from 'vue-router'; // Using Vue Router hooks
+<script setup>
+import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
 
-// Import images (ensure paths are correct)
-import washAndFold from '@/assets/images/wash-and-fold.webp';
-import dryCleaning from '@/assets/images/dry-cleaning.jpg';
-import ironingAndPressing from '@/assets/images/ironing-and-pressing.jpg';
-import expressLaundry from '@/assets/images/express-laundry.jpg';
+const router = useRouter();
 
-export default {
-  name: 'ServicesView',
-  setup() {
-    const route = useRoute();
-    const router = useRouter();
-
-    // Service Data (can be moved to a separate file/store)
-    const services = ref([
-      {
-        id: 'wash-fold', // Added ID for better identification
-        name: "Wash & Fold",
-        brief: "Perfect for everyday laundry needs",
-        icon: "fas fa-tshirt", // Assuming FontAwesome
-        image: washAndFold,
-        highlights: ["Eco-friendly", "Sorted by color"],
-        description: [
-          "Our Wash & Fold service is perfect for everyday laundry needs. We carefully sort, wash, dry, and fold your items with attention to detail.",
-          "This service is ideal for casual wear, bed linens, and towels. Your items will be returned fresh, clean, and neatly folded, ready to be put away."
-        ],
-        features: [
-          "Sorting by color and fabric type",
-          "Premium detergents & fabric softeners",
-          "Precise temperature control",
-          "Neatly folded and packaged",
-          "24-hour turnaround available"
-        ]
-      },
-      {
-        id: 'dry-clean',
-        name: "Dry Cleaning",
-        brief: "Best for delicate fabrics and formal attire",
-        icon: "fas fa-user-tie",
-        image: dryCleaning,
-        highlights: ["Stain removal", "Fabric protection"],
-        description: [
-          "Dry Cleaning is the best option for delicate fabrics and garments that require special care. Our professional process removes stains while protecting fabric integrity.",
-          "This service is ideal for suits, dresses, formal attire, and garments with 'dry clean only' labels. We use environmentally friendly solvents for superior results."
-        ],
-        features: [
-          "Pre-treatment of stains and spots",
-          "Eco-friendly solvents",
-          "Button and embellishment protection",
-          "Careful inspection process",
-          "Properly pressed and hung"
-        ]
-      },
-      {
-        id: 'ironing',
-        name: "Ironing & Pressing",
-        brief: "For perfectly smooth, wrinkle-free clothes",
-        icon: "fas fa-steam", // Changed icon for better representation
-        image: ironingAndPressing,
-        highlights: ["Professional finish", "Attention to detail"],
-        description: [
-          "Our Ironing & Pressing service ensures your clothes are perfectly smooth and wrinkle-free. Each item receives careful attention from our experienced staff.",
-          "Ideal for business wear, uniforms, dress shirts, and special occasion garments. We can also press previously laundered items."
-        ],
-        features: [
-          "Steam pressing for optimal results",
-          "Careful attention to collars and cuffs",
-          "Precise temperature for each fabric type",
-          "Professional folding or hanging",
-          "Same-day service available"
-        ]
-      },
-      {
-        id: 'express',
-        name: "Express Laundry",
-        brief: "Same-day service for urgent needs",
-        icon: "fas fa-bolt",
-        image: expressLaundry,
-        highlights: ["Same-day service", "Priority handling"],
-        description: [
-          "Need your laundry done fast? Our Express Laundry service is the solution with same-day turnaround for items dropped off before 10am.",
-          "Perfect for busy individuals, professionals, and last-minute needs. All the quality of our standard service, just faster!"
-        ],
-        features: [
-          "Same-day turnaround (before 10am)",
-          "Priority handling",
-          "Text notifications when ready",
-          "Standard or premium detergents",
-          "Rush service available for additional fee"
-        ]
-      }
-    ]);
-
-    // State
-    const selectedServiceIndex = ref(0); // Default to the first service
-
-    // Computed property to get the data of the currently selected service
-    const selectedServiceData = computed(() => {
-      return services.value[selectedServiceIndex.value] || null;
-    });
-
-    // Methods
-    const selectService = (index) => {
-      // Update the route query parameter, which will trigger the watcher
-      router.push({ query: { service: index } });
-    };
-
-    const updateTitle = (index) => {
-      const serviceName = services.value[index]?.name;
-      document.title = serviceName ? `${serviceName} | WashWash Services` : 'WashWash Services';
-    };
-
-    const setServiceFromRoute = (queryParam) => {
-        const index = parseInt(queryParam, 10);
-        // Validate the index
-        if (!isNaN(index) && index >= 0 && index < services.value.length) {
-            if(selectedServiceIndex.value !== index) { // Avoid unnecessary updates
-                selectedServiceIndex.value = index;
-            }
-        } else {
-            // If invalid index in query, default to 0 and update URL (optional)
-            selectedServiceIndex.value = 0;
-            // Optionally, replace the route if the query was invalid/missing
-            // router.replace({ query: { service: 0 } });
-        }
-        updateTitle(selectedServiceIndex.value); // Update title after setting index
-    };
-
-    // Watchers
-    watch(() => route.query.service, (newServiceQuery) => {
-        setServiceFromRoute(newServiceQuery);
-    }, { immediate: true }); // immediate: true runs the watcher once on component mount
-
-    // Lifecycle Hooks
-    onMounted(() => {
-      // Initial check is handled by the immediate watcher now
-      // updateTitle(selectedServiceIndex.value); // Update title on mount
-    });
-
-    return {
-      services,
-      selectedServiceIndex,
-      selectedServiceData,
-      selectService,
-    };
+// Available services with detailed descriptions
+const availableServices = [
+  {
+    id: 'wash-fold',
+    name: 'Wash and Fold',
+    description: 'Our comprehensive wash and fold service handles all your everyday laundry needs with care. We use premium detergents and fabric softeners to ensure your clothes are thoroughly cleaned, perfectly dried, and neatly folded, ready to be placed directly into your wardrobe.'
   },
+  {
+    id: 'dry-cleaning',
+    name: 'Dry Cleaning',
+    description: 'Our professional dry cleaning service is perfect for delicate fabrics and special garments that require extra care. Using specialized solvents and techniques, we remove stains and clean your valuable items without water damage, preserving colors and extending the life of your fine clothing.'
+  },
+  {
+    id: 'ironing',
+    name: 'Ironing and Pressing',
+    description: 'Achieve that perfectly crisp, wrinkle-free look with our expert ironing and pressing service. Our skilled professionals use premium equipment to ensure every garment receives the appropriate treatment, from light pressing for delicate fabrics to sharp creases for formal attire.'
+  },
+  {
+    id: 'express',
+    name: 'Express Service',
+    description: 'When time is of the essence, our express service delivers rapid results without compromising on quality. With same-day turnaround available, your urgent laundry needs are handled efficiently, perfect for last-minute events or unexpected situations that require immediate attention.'
+  }
+];
+
+// Items for each service with descriptions
+const serviceItems = {
+  'wash-fold': [
+    { id: 'wf-tshirt', name: 'T-Shirts', price: 30, quantity: 0, description: 'Casual cotton t-shirts' },
+    { id: 'wf-shirt', name: 'Shirts', price: 35, quantity: 0, description: 'Button-up casual or formal shirts' },
+    { id: 'wf-trousers', name: 'Trousers', price: 40, quantity: 0, description: 'Regular or formal trousers' },
+    { id: 'wf-jeans', name: 'Jeans', price: 45, quantity: 0, description: 'Denim jeans of any style' },
+    { id: 'wf-shorts', name: 'Shorts', price: 25, quantity: 0, description: 'Casual or sports shorts' },
+    { id: 'wf-bedsheet', name: 'Bedsheets (Single)', price: 50, quantity: 0, description: 'Single bed sheets and pillowcases' },
+    { id: 'wf-bedsheet-double', name: 'Bedsheets (Double)', price: 70, quantity: 0, description: 'Double or queen bed sheets' },
+    { id: 'wf-blanket-small', name: 'Blankets (Small)', price: 80, quantity: 0, description: 'Throw blankets or small coverings' },
+    { id: 'wf-blanket-large', name: 'Blankets (Large)', price: 120, quantity: 0, description: 'Large comforters and duvets' },
+    { id: 'wf-towel', name: 'Towels', price: 40, quantity: 0, description: 'Bath and hand towels' },
+    { id: 'wf-pillowcase', name: 'Pillowcases', price: 15, quantity: 0, description: 'Individual pillowcases' }
+  ],
+  'dry-cleaning': [
+    { id: 'dc-suit', name: 'Suits (2-piece)', price: 150, quantity: 0, description: 'Jacket and trousers/skirt' },
+    { id: 'dc-suit-3pc', name: 'Suits (3-piece)', price: 200, quantity: 0, description: 'Jacket, trousers/skirt, and waistcoat' },
+    { id: 'dc-dress', name: 'Dresses (Simple)', price: 120, quantity: 0, description: 'Casual or light fabric dresses' },
+    { id: 'dc-dress-formal', name: 'Dresses (Formal)', price: 180, quantity: 0, description: 'Evening gowns and special occasion dresses' },
+    { id: 'dc-coat', name: 'Coats', price: 130, quantity: 0, description: 'Heavy winter coats and overcoats' },
+    { id: 'dc-jacket', name: 'Jackets', price: 100, quantity: 0, description: 'Light jackets and blazers' },
+    { id: 'dc-trousers', name: 'Trousers', price: 100, quantity: 0, description: 'Formal or special fabric trousers' },
+    { id: 'dc-skirt', name: 'Skirts', price: 90, quantity: 0, description: 'Simple or pleated skirts' },
+    { id: 'dc-blazer', name: 'Blazers', price: 110, quantity: 0, description: 'Formal blazers and sport coats' },
+    { id: 'dc-sweater', name: 'Sweaters', price: 100, quantity: 0, description: 'Wool, cashmere or delicate knit sweaters' },
+    { id: 'dc-blanket', name: 'Blankets', price: 200, quantity: 0, description: 'Special care blankets and comforters' }
+  ],
+  'ironing': [
+    { id: 'ir-shirt', name: 'Shirts', price: 20, quantity: 0, description: 'Button-up shirts with perfect collar and cuff press' },
+    { id: 'ir-tshirt', name: 'T-Shirts', price: 15, quantity: 0, description: 'Casual t-shirts with smooth finish' },
+    { id: 'ir-trousers', name: 'Trousers', price: 25, quantity: 0, description: 'Formal trousers with sharp crease' },
+    { id: 'ir-jeans', name: 'Jeans', price: 30, quantity: 0, description: 'Denim jeans with structured finish' },
+    { id: 'ir-dress', name: 'Dresses (Simple)', price: 30, quantity: 0, description: 'Light fabric casual dresses' },
+    { id: 'ir-dress-complex', name: 'Dresses (Complex)', price: 45, quantity: 0, description: 'Multi-layered or detailed dresses' },
+    { id: 'ir-skirt', name: 'Skirts', price: 25, quantity: 0, description: 'All types of skirts with proper pleating when needed' },
+    { id: 'ir-blouse', name: 'Blouses', price: 25, quantity: 0, description: 'Women\'s tops with detailed attention to collars and cuffs' },
+    { id: 'ir-bedsheet', name: 'Bedsheets', price: 35, quantity: 0, description: 'Smooth and crisp finish for all bedsheets' },
+    { id: 'ir-pillowcase', name: 'Pillowcases', price: 10, quantity: 0, description: 'Perfect corners and smooth finish' },
+    { id: 'ir-tablecloth', name: 'Tablecloths', price: 40, quantity: 0, description: 'Wrinkle-free finish for table linens' }
+  ],
+  'express': [
+    { id: 'ex-shirt', name: 'Shirts', price: 50, quantity: 0, description: 'Rushed wash and press service for urgent needs' },
+    { id: 'ex-tshirt', name: 'T-Shirts', price: 40, quantity: 0, description: '3-hour turnaround for casual tops' },
+    { id: 'ex-trousers', name: 'Trousers', price: 60, quantity: 0, description: 'Same-day cleaning and pressing' },
+    { id: 'ex-jeans', name: 'Jeans', price: 65, quantity: 0, description: 'Quick wash and dry for denim' },
+    { id: 'ex-dress-light', name: 'Light Dresses', price: 70, quantity: 0, description: 'Fast service for simple dresses' },
+    { id: 'ex-suit', name: 'Suits', price: 250, quantity: 0, description: 'Priority handling for business and formal suits' },
+    { id: 'ex-jacket', name: 'Jackets', price: 150, quantity: 0, description: 'Quick turnaround for outerwear' },
+    { id: 'ex-blouse', name: 'Blouses', price: 55, quantity: 0, description: 'Express cleaning for women\'s tops' },
+    { id: 'ex-skirt', name: 'Skirts', price: 60, quantity: 0, description: 'Same-day service for skirts' },
+    { id: 'ex-bedsheet', name: 'Bedsheets', price: 90, quantity: 0, description: 'Urgent cleaning for bedding' }
+  ]
 };
+
+// State management
+const currentScreen = ref('services');
+const selectedService = ref(null);
+const currentItems = ref([]);
+const cart = ref([]);
+
+// Computed properties
+const currentServiceTotal = computed(() => {
+  return currentItems.value.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+});
+
+const totalOrderCost = computed(() => {
+  return cart.value.reduce((total, serviceOrder) => {
+    return total + calculateServiceTotal(serviceOrder.items);
+  }, 0);
+});
+
+// Methods
+function selectService(service) {
+  selectedService.value = service;
+  // Create a deep copy of the service items to avoid modifying the original data
+  currentItems.value = JSON.parse(JSON.stringify(serviceItems[service.id]));
+  currentScreen.value = 'modal';
+}
+
+function incrementQuantity(item) {
+  item.quantity++;
+}
+
+function decrementQuantity(item) {
+  if (item.quantity > 0) {
+    item.quantity--;
+  }
+}
+
+function calculateServiceTotal(items) {
+  return items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+}
+
+function addToCart() {
+  // Filter out items with zero quantity
+  const itemsWithQuantity = currentItems.value.filter(item => item.quantity > 0);
+
+  // Only add to cart if there are items selected
+  if (itemsWithQuantity.length > 0) {
+    cart.value.push({
+      service: selectedService.value,
+      items: currentItems.value
+    });
+  }
+
+  // Return to services screen
+  closeModal();
+}
+
+function closeModal() {
+  selectedService.value = null;
+  currentItems.value = [];
+  currentScreen.value = 'services';
+}
+
+function proceedToCheckout() {
+  // Store cart data in localStorage to share with thank you page
+  localStorage.setItem('laundryCart', JSON.stringify(cart.value));
+  // Navigate to thank you page
+  router.push('/thankyou');
+}
+
+function cancelOrder() {
+  cart.value = [];
+}
 </script>
 
 <style scoped>
-/* Using CSS Variables for better theming */
-:root {
-  --primary-color: palevioletred;
-  --secondary-color: rgb(245, 230, 230); /* Lighter pink for backgrounds */
-  --background-color: #fdfdfe; /* Off-white */
-  --text-color: #333;
-  --text-muted: #666;
-  --white: #fff;
-  --border-light: rgba(0, 0, 0, 0.08);
-  --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.06);
-  --shadow-medium: 0 6px 15px rgba(0, 0, 0, 0.08);
-  --border-radius-medium: 12px;
-  --border-radius-large: 16px;
-}
-
-.services-page {
-  display: flex;
-  min-height: 100vh; /* Use min-height instead of height for flexibility */
-  background-color: var(--background-color);
+.laundry-app {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: var(--text-color);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
 }
 
-/* Sidebar Styles */
-.services-page__sidebar {
-  width: 320px; /* Fixed width for larger screens */
-  flex-shrink: 0; /* Prevent sidebar from shrinking */
-  background-color: var(--white);
-  box-shadow: 2px 0 15px var(--border-light);
-  padding: 2rem 1.5rem;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  height: 100vh; /* Full height sidebar */
-  position: sticky; /* Stick sidebar on scroll */
-  top: 0;
-}
-
-.brand-container {
+.intro-text {
   text-align: center;
-  margin-bottom: 2.5rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+  color: #555;
 }
 
-.brand-container__heading {
-  font-size: 2rem;
-  color: var(--primary-color);
-  margin-bottom: 0.5rem;
-  font-weight: 700;
+.service-screen {
+  text-align: center;
 }
 
-.brand-container__tagline {
-  color: var(--text-muted);
-  font-size: 1rem;
-}
-
-.services-list {
-  flex-grow: 1; /* Allow list to take available space */
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem; /* Slightly reduced gap */
+.service-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  margin: 2rem 0;
 }
 
 .service-card {
-  background-color: var(--white);
-  border-radius: var(--border-radius-medium);
-  padding: 1rem 1.25rem;
-  cursor: pointer;
-  /* Apply transition to properties that change on hover/active */
-  transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease, border-left-color 0.3s ease;
-  border-left: 5px solid transparent;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  text-align: left;
+  transition: transform 0.2s ease;
 }
 
 .service-card:hover {
-  background-color: var(--secondary-color);
-  /* Subtle hover effect */
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-soft);
+  transform: translateY(-5px);
 }
 
-.service-card--active {
-  border-left-color: var(--primary-color);
-  background-color: var(--secondary-color);
-  box-shadow: var(--shadow-soft);
-}
-
-.service-card__icon {
-  font-size: 1.6rem; /* Slightly larger icon */
-  width: 3rem;
-  height: 3rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary-color);
-  background-color: rgba(219, 112, 147, 0.1);
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.service-card__info {
-  flex: 1;
-  overflow: hidden; /* Prevent text overflow issues */
-}
-
-.service-card__title {
-  font-size: 1.15rem; /* Slightly smaller title */
-  font-weight: 600;
-  margin: 0 0 0.25rem 0;
-  color: var(--text-color);
-}
-
-.service-card__brief {
-  font-size: 0.85rem; /* Slightly smaller brief */
-  color: var(--text-muted);
-  margin: 0;
-  white-space: nowrap; /* Prevent wrapping */
-  overflow: hidden;
-  text-overflow: ellipsis; /* Add ellipsis if too long */
-}
-
-.contact-info {
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border-light);
-  font-size: 0.9rem;
-  color: var(--text-muted);
-}
-
-.contact-info p {
-  margin: 0.5rem 0;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem; /* Increased gap */
-}
-
-.contact-info__icon {
-  color: var(--primary-color);
-  width: 1.2em; /* Ensure icons align well */
-  text-align: center;
-}
-
-/* Service Details Styles */
-.services-page__details {
-  flex-grow: 1; /* Allow details section to take remaining space */
-  padding: 2rem 3rem; /* Adjusted padding */
-  overflow-y: auto;
-  background-color: var(--background-color);
-  /* Optional: Add subtle shadow for depth */
-  /* box-shadow: inset 5px 0 15px rgba(0, 0, 0, 0.03); */
-}
-
-.details-content {
-    max-width: 900px; /* Limit content width for readability */
-    margin: 0 auto; /* Center content */
-}
-
-.details-header {
-  margin-bottom: 2.5rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.details-header__heading {
-  font-size: 2.8rem; /* Larger heading */
-  color: var(--primary-color);
+.service-card h3 {
+  color: #0078d7;
   margin-bottom: 1rem;
-  font-weight: 700;
 }
 
-.details-header__highlights {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+.service-card p {
+  color: #555;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
 }
 
-.highlight-badge {
-  background-color: rgba(219, 112, 147, 0.1);
-  color: var(--primary-color);
-  padding: 0.5rem 1.2rem; /* Adjusted padding */
-  border-radius: 30px;
-  font-size: 0.9rem; /* Slightly larger */
-  font-weight: 500;
-}
-
-.details-image-container {
+.service-button {
+  padding: 0.75rem 1.5rem;
+  background-color: #0078d7;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
   width: 100%;
-  max-height: 400px; /* Limit image height */
-  overflow: hidden;
-  border-radius: var(--border-radius-large);
-  margin-bottom: 2.5rem;
-  position: relative;
-  box-shadow: var(--shadow-medium);
 }
 
-.details-image-container__image {
+.service-button:hover {
+  background-color: #005a9e;
+}
+
+.cart-summary {
+  margin-top: 3rem;
+  padding: 1.5rem;
+  background-color: #f5f5f5;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: left;
+}
+
+.cart-item {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.cart-item h4 {
+  margin-bottom: 0.5rem;
+  color: #0078d7;
+}
+
+.cart-item-detail {
+  margin-left: 1rem;
+  line-height: 1.6;
+}
+
+.cart-total {
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-top: 1.5rem;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.primary-button {
+  padding: 0.75rem 2rem;
+  background-color: #0078d7;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.secondary-button {
+  padding: 0.75rem 2rem;
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Cover ensures the image fills the container */
-  transition: transform 0.5s ease; /* Smoother zoom */
-  display: block; /* Remove potential bottom space */
-}
-
-.details-image-container:hover .details-image-container__image {
-  transform: scale(1.04); /* Slightly less zoom */
-}
-
-.details-text {
-  color: var(--text-color);
-  line-height: 1.7; /* Increased line height */
-}
-
-.details-text__paragraph {
-  margin-bottom: 1.5rem;
-  font-size: 1.05rem;
-  color: var(--text-muted); /* Slightly muted paragraph text */
-}
-.details-text__paragraph:first-of-type {
-    color: var(--text-color); /* Make first paragraph standard color */
-    font-size: 1.1rem;
-}
-
-
-.service-features {
-  background-color: var(--white);
-  border-radius: var(--border-radius-medium);
-  margin: 2.5rem 0;
-  box-shadow: var(--shadow-soft);
-  overflow: hidden;
-  border: 1px solid rgba(219, 112, 147, 0.15);
-}
-
-.service-features__title {
-  margin: 0;
-  padding: 1.25rem 1.5rem; /* Adjusted padding */
-  font-size: 1.2rem;
-  color: var(--white);
-  background-color: var(--primary-color);
-  font-weight: 600;
-}
-
-.service-features__grid {
-  padding: 1.5rem;
-  display: grid;
-  /* Responsive grid: 1 column on small, 2 on medium+ */
-  grid-template-columns: 1fr;
-  gap: 1rem; /* Reduced gap */
-}
-
-/* Adjust grid for larger screens inside a media query if needed */
-@media (min-width: 600px) {
-  .service-features__grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
-  }
-}
-
-
-.feature-item {
+  background-color: rgba(0, 0, 0, 0.6);
   display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  border-radius: 8px;
-  background-color: transparent; /* Remove background, rely on parent card */
-}
-
-.feature-item__icon {
-  background-color: var(--primary-color);
-  color: white;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  font-size: 0.8rem; /* Smaller icon size */
-  flex-shrink: 0;
-  margin-top: 2px; /* Align icon slightly better with text */
+  align-items: center;
+  z-index: 1000;
 }
 
-.feature-item__text {
-  font-size: 0.95rem;
+.modal-box {
+  background-color: white;
+  border-radius: 12px;
+  padding: 2.5rem;
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modal-box h3 {
+  color: #0078d7;
+  margin-bottom: 0.5rem;
+}
+
+.modal-box > p {
+  color: #555;
+  margin-bottom: 2rem;
   line-height: 1.5;
-  color: var(--text-muted);
 }
 
-.cta-container {
+.items-grid {
+  margin: 1.5rem 0;
+}
+
+.item-row {
   display: flex;
-  gap: 1rem;
-  margin-top: 3rem; /* Increased margin */
-}
-
-.cta-button {
-  padding: 0.9rem 1.8rem; /* Slightly adjusted padding */
-  border-radius: 8px;
-  font-size: 1.05rem; /* Slightly smaller font */
-  font-weight: 500; /* Medium weight */
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: none;
-  display: inline-flex; /* Use inline-flex for better alignment */
+  justify-content: space-between;
   align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.item-info {
+  display: flex;
+  flex-direction: column;
+  max-width: 70%;
+}
+
+.item-name {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.item-price {
+  color: #0078d7;
+  font-weight: 600;
+  margin: 0.2rem 0;
+}
+
+.item-description {
+  color: #666;
+  font-size: 0.9rem;
+  margin-top: 0.3rem;
+}
+
+.item-controls {
+  display: flex;
+  align-items: center;
+}
+
+.quantity-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  font-size: 1.2rem;
+  display: flex;
   justify-content: center;
-  gap: 0.6rem; /* Gap between icon and text */
-  text-decoration: none; /* Remove underline from router-link */
-  flex-grow: 1; /* Make buttons fill container */
+  align-items: center;
+  cursor: pointer;
 }
 
-.cta-button--primary {
-  background-color: var(--primary-color);
-  color: white;
-  box-shadow: 0 4px 10px rgba(219, 112, 147, 0.25);
+.quantity-input {
+  width: 50px;
+  text-align: center;
+  margin: 0 0.5rem;
+  padding: 0.25rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
 }
 
-.cta-button--primary:hover {
-  background-color: #c9486d; /* Darker shade */
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(219, 112, 147, 0.35);
+.service-total {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin: 1.5rem 0;
+  text-align: right;
+  color: #0078d7;
 }
 
-.cta-button--secondary {
-  background-color: var(--white);
-  color: var(--primary-color);
-  border: 2px solid var(--primary-color);
-  box-shadow: none;
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
 }
-
-.cta-button--secondary:hover {
-  background-color: rgba(219, 112, 147, 0.05);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-}
-
-
-/* Transition effect for content swapping */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
-  transform: translateY(15px); /* Smoother vertical transition */
-}
-
-
-/* --- Mobile Responsive Design --- */
-@media (max-width: 992px) { /* Adjust breakpoint if needed */
-    .services-page__details {
-        padding: 2rem; /* Reduce padding on medium screens */
-    }
-
-    .details-header__heading {
-        font-size: 2.4rem;
-    }
-}
-
-
-@media (max-width: 768px) {
-  .services-page {
-    flex-direction: column; /* Stack vertically */
-    height: auto; /* Allow height to adjust to content */
-  }
-
-  .services-page__sidebar {
-    width: 100%; /* Full width */
-    height: auto; /* Adjust height */
-    max-height: none; /* Remove max height limit */
-    position: static; /* Remove sticky positioning */
-    box-shadow: 0 2px 10px var(--border-light); /* Bottom shadow */
-    border-bottom: 1px solid var(--border-light);
-    overflow-y: visible; /* Allow content to scroll with page */
-  }
-
-  .services-list {
-      /* Optional: Horizontal scroll for service cards on mobile */
-      /* display: flex;
-      flex-direction: row;
-      overflow-x: auto;
-      padding-bottom: 1rem;
-      gap: 0.8rem; */
-  }
-
-  .service-card {
-      /* Adjust card styles if using horizontal scroll */
-      /* flex-shrink: 0; width: 200px; */
-  }
-
-  .services-page__details {
-    padding: 1.5rem; /* Further reduce padding */
-    border-radius: 0; /* Remove top radius */
-    box-shadow: none; /* Remove side shadow */
-  }
-
-  .details-header__heading {
-    font-size: 2rem; /* Smaller heading */
-  }
-
-  .details-image-container {
-    max-height: 250px; /* Reduced image height */
-    margin-bottom: 2rem;
-  }
-
-  .cta-container {
-    flex-direction: column; /* Stack buttons */
-  }
-
-  .cta-button {
-    width: 100%; /* Full width buttons */
-  }
-}
-
 </style>
