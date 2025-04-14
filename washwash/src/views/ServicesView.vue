@@ -33,19 +33,19 @@
             </div>
           </div>
           <div v-if="cart.length > 0" class="cart-summary">
-        <h3>Current Order</h3>
-        <div v-for="(serviceOrder, index) in cart" :key="index" class="cart-item">
-          <h4>{{ serviceOrder.service.name }}</h4>
-          <div v-for="item in serviceOrder.items" :key="item.id" class="cart-item-detail">
-            <span v-if="item.quantity > 0">{{ item.name }} x {{ item.quantity }}</span>
+            <h3>Current Order</h3>
+            <div v-for="(serviceOrder, index) in cart" :key="index" class="cart-item">
+              <h4>{{ serviceOrder.service.name }}</h4>
+              <div v-for="item in serviceOrder.items" :key="item.id" class="cart-item-detail">
+                <span v-if="item.quantity > 0">{{ item.name }} x {{ item.quantity }}</span>
+              </div>
+            </div>
+            <p class="cart-total">Total: Ksh {{ totalOrderCost }}</p>
+            <div class="action-buttons">
+              <button @click="proceedToCheckout" class="primary-button">Complete Order</button>
+              <button @click="cancelOrder" class="secondary-button">Cancel Order</button>
+            </div>
           </div>
-        </div>
-        <p class="cart-total">Total: Ksh {{ totalOrderCost }}</p>
-        <div class="action-buttons">
-          <button @click="proceedToCheckout" class="primary-button">Complete Order</button>
-          <button @click="cancelOrder" class="secondary-button">Cancel Order</button>
-        </div>
-      </div>
         </div>
       </transition>
     </div>
@@ -145,33 +145,33 @@ export default {
       'wash-fold': [
         { id: 'wf-tshirt', name: 'T-Shirts', price: 30, quantity: 0, description: 'Casual cotton t-shirts' },
         { id: 'wf-shirt', name: 'Shirts', price: 35, quantity: 0, description: 'Button-up casual or formal shirts' },
-        { id: 'wf-trousers', name: 'Trousers', price: 40, quantity: 0, description: 'Regular or formal trousers' }, { id: 'wf-jeans', name: 'Jeans', price: 45, quantity: 0, description: 'Denim jeans of any style' },
-    { id: 'wf-shorts', name: 'Shorts', price: 25, quantity: 0, description: 'Casual or sports shorts' },
-    
+        { id: 'wf-trousers', name: 'Trousers', price: 40, quantity: 0, description: 'Regular or formal trousers' },
+        { id: 'wf-jeans', name: 'Jeans', price: 45, quantity: 0, description: 'Denim jeans of any style' },
+        { id: 'wf-shorts', name: 'Shorts', price: 25, quantity: 0, description: 'Casual or sports shorts' }
       ],
       'dry-cleaning': [
         { id: 'dc-suit', name: 'Suits (2-piece)', price: 150, quantity: 0, description: 'Jacket and trousers/skirt' },
         { id: 'dc-dress', name: 'Dresses (Formal)', price: 180, quantity: 0, description: 'Evening gowns and special occasion dresses' },
-,{ id: 'dc-coat', name: 'Coats', price: 130, quantity: 0, description: 'Heavy winter coats and overcoats' },
-    { id: 'dc-jacket', name: 'Jackets', price: 100, quantity: 0, description: 'Light jackets and blazers' },
-    
+        { id: 'dc-coat', name: 'Coats', price: 130, quantity: 0, description: 'Heavy winter coats and overcoats' },
+        { id: 'dc-jacket', name: 'Jackets', price: 100, quantity: 0, description: 'Light jackets and blazers' }
       ],
       'ironing': [
-    { id: 'ir-shirt', name: 'Shirts', price: 20, quantity: 0, description: 'Button-up shirts with perfect collar and cuff press' },
-    { id: 'ir-tshirt', name: 'T-Shirts', price: 15, quantity: 0, description: 'Casual t-shirts with smooth finish' },
-    { id: 'ir-trousers', name: 'Trousers', price: 25, quantity: 0, description: 'Formal trousers with sharp crease' },
-    { id: 'ir-jeans', name: 'Jeans', price: 30, quantity: 0, description: 'Denim jeans with structured finish' },
-     ] ,
-  'express': [
-    { id: 'ex-shirt', name: 'Shirts', price: 50, quantity: 0, description: 'Rushed wash and press service for urgent needs' },
-     { id: 'ex-trousers', name: 'Trousers', price: 60, quantity: 0, description: 'Same-day cleaning and pressing' },
-    { id: 'ex-jeans', name: 'Jeans', price: 65, quantity: 0, description: 'Quick wash and dry for denim' },
-    { id: 'ex-suit', name: 'Suits', price: 250, quantity: 0, description: 'Priority handling for business and formal suits' },
-    ]
+        { id: 'ir-shirt', name: 'Shirts', price: 20, quantity: 0, description: 'Button-up shirts with perfect collar and cuff press' },
+        { id: 'ir-tshirt', name: 'T-Shirts', price: 15, quantity: 0, description: 'Casual t-shirts with smooth finish' },
+        { id: 'ir-trousers', name: 'Trousers', price: 25, quantity: 0, description: 'Formal trousers with sharp crease' },
+        { id: 'ir-jeans', name: 'Jeans', price: 30, quantity: 0, description: 'Denim jeans with structured finish' }
+      ],
+      'express': [
+        { id: 'ex-shirt', name: 'Shirts', price: 50, quantity: 0, description: 'Rushed wash and press service for urgent needs' },
+        { id: 'ex-trousers', name: 'Trousers', price: 60, quantity: 0, description: 'Same-day cleaning and pressing' },
+        { id: 'ex-jeans', name: 'Jeans', price: 65, quantity: 0, description: 'Quick wash and dry for denim' },
+        { id: 'ex-suit', name: 'Suits', price: 250, quantity: 0, description: 'Priority handling for business and formal suits' }
+      ]
     });
 
     const cart = ref([]);
-    const currentServiceTotal = computed(() => {
+
+    const totalOrderCost = computed(() => {
       return cart.value.reduce((total, serviceOrder) => {
         return total + serviceOrder.items.reduce((subTotal, item) => {
           return subTotal + (item.price * item.quantity);
@@ -215,7 +215,7 @@ export default {
       availableServices,
       serviceItems,
       cart,
-      currentServiceTotal,
+      totalOrderCost,
       selectService,
       openModal,
       closeModal,
@@ -226,7 +226,6 @@ export default {
   }
 };
 </script>
-
 
 <style scoped>
 .services-page {
