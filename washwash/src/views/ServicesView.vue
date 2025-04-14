@@ -29,7 +29,7 @@
             </p>
             <div class="cta-container">
               <button class="book-now-btn">Book This Service</button>
-              <button class="pricing-btn">View Pricing</button>
+             
             </div>
           </div>
         </div>
@@ -156,6 +156,7 @@ export default {
   display: flex;
   gap: 1rem;
   margin-top: 1.5rem;
+  justify-content: center;
 }
 .book-now-btn {
   background-color: #3498db;
