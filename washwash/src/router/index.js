@@ -5,12 +5,13 @@ import ContactView from '@/views/ContactView.vue'
 import LoginView from '@/views/LoginView.vue'
 import SignUpView from '@/views/SignUpView.vue'
 import ServicesView from '@/views/ServicesView.vue'
+import GarmentSelector from '@/views/GarmentSelector.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/home',
+      path: '/',
       name: 'home',
       component: HomeView,
     },
@@ -25,7 +26,7 @@ const router = createRouter({
       component:ContactView,
     },
     {
-      path:'/',
+      path:'/home',
       name:'login',
       component:LoginView,
     },
@@ -38,7 +39,13 @@ const router = createRouter({
       path:'/services',
       name:'services',
       component:ServicesView,
+    },
+    {
+      path:'/garment',
+      name:'garment-selector',
+      component:GarmentSelector
     }
+
   ],
 })
 
