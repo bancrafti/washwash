@@ -1,38 +1,89 @@
 <template>
   <div class="laundry-app">
-    <!-- Service Selection Screen -->
-    <div v-if="currentScreen === 'services'" class="service-screen">
-      <h2>Laundry Services</h2>
-      <p class="intro-text">Select from our professional laundry services below:</p>
+    <h1 class="main-title">WashWash Laundry Services</h1>
+    <p class="intro-text">Professional laundry services tailored to your needs</p>
 
-      <div class="service-grid">
-        <div v-for="service in availableServices" :key="service.id" class="service-card">
-          <h3>{{ service.name }}</h3>
-          <p>{{ service.description }}</p>
-          <button @click="selectService(service)" class="service-button">Select Service</button>
+    <div class="content-columns">
+      <!-- Left Column: Services List -->
+      <div class="services-list-column">
+        <h2 class="column-title">Our Services</h2>
+        <div class="services-list">
+          <div
+            v-for="service in availableServices"
+            :key="service.id"
+            class="service-list-item"
+            :class="{ 'active': selectedViewService && selectedViewService.id === service.id }"
+            @click="viewServiceDetails(service)"
+          >
+            <div class="service-icon">{{ getServiceIcon(service.id) }}</div>
+            <div class="service-list-name">{{ service.name }}</div>
+          </div>
+        </div>
+
+        <!-- Cart Summary (moved to left column) -->
+        <div v-if="cart.length > 0" class="cart-summary">
+          <h3>Current Order</h3>
+          <div v-for="(serviceOrder, index) in cart" :key="index" class="cart-item">
+            <h4>{{ serviceOrder.service.name }}</h4>
+            <div v-for="item in serviceOrder.items" :key="item.id" class="cart-item-detail">
+              <span v-if="item.quantity > 0">{{ item.name }} x {{ item.quantity }}</span>
+            </div>
+          </div>
+          <p class="cart-total">Total: Ksh {{ totalOrderCost }}</p>
+          <div class="action-buttons">
+            <button @click="proceedToCheckout" class="primary-button">Complete Order</button>
+            <button @click="cancelOrder" class="secondary-button">Cancel Order</button>
+          </div>
         </div>
       </div>
 
-      <div v-if="cart.length > 0" class="cart-summary">
-        <h3>Current Order</h3>
-        <div v-for="(serviceOrder, index) in cart" :key="index" class="cart-item">
-          <h4>{{ serviceOrder.service.name }}</h4>
-          <div v-for="item in serviceOrder.items" :key="item.id" class="cart-item-detail">
-            <span v-if="item.quantity > 0">{{ item.name }} x {{ item.quantity }}</span>
+      <!-- Right Column: Service Details -->
+      <div class="service-details-column">
+        <div v-if="selectedViewService" class="service-details">
+          <h2 class="service-title">{{ selectedViewService.name }}</h2>
+          <div class="service-image">
+            <div class="image-placeholder">
+              <span class="service-icon-large">{{ getServiceIcon(selectedViewService.id) }}</span>
+            </div>
           </div>
+          <div class="service-description">
+            <p>{{ selectedViewService.description }}</p>
+          </div>
+          <div class="service-features">
+            <h3>Features</h3>
+            <ul>
+              <li v-for="(feature, index) in getServiceFeatures(selectedViewService.id)" :key="index">
+                {{ feature }}
+              </li>
+            </ul>
+          </div>
+          <div class="pricing-preview">
+            <h3>Sample Pricing</h3>
+            <div class="pricing-items">
+              <div v-for="(item, index) in getSamplePricing(selectedViewService.id)" :key="index" class="price-item">
+                <span class="item-name">{{ item.name }}</span>
+                <span class="item-price">Ksh {{ item.price }}</span>
+              </div>
+            </div>
+          </div>
+          <button @click="selectService(selectedViewService)" class="select-service-btn">Select {{ selectedViewService.name }}</button>
         </div>
-        <p class="cart-total">Total: Ksh {{ totalOrderCost }}</p>
-        <div class="action-buttons">
-          <button @click="proceedToCheckout" class="primary-button">Complete Order</button>
-          <button @click="cancelOrder" class="secondary-button">Cancel Order</button>
+        <div v-else class="no-service-selected">
+          <div class="placeholder-message">
+            <div class="message-icon">👈</div>
+            <p>Please select a service from the list to view details</p>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Service Modal -->
+    <!-- Service Modal (remains the same functionality) -->
     <div v-if="selectedService && currentScreen === 'modal'" class="modal-overlay">
       <div class="modal-box">
-        <h3>{{ selectedService.name }} Service</h3>
+        <div class="modal-header">
+          <h3>{{ selectedService.name }} Service</h3>
+          <button @click="closeModal" class="close-button">×</button>
+        </div>
         <p>{{ selectedService.description }}</p>
 
         <div class="items-grid">
@@ -148,9 +199,63 @@ const serviceItems = {
   ]
 };
 
+// Service features for the right panel
+const serviceFeatures = {
+  'wash-fold': [
+    'Premium eco-friendly detergents',
+    'Gentle cycle for delicate items',
+    'Temperature-controlled drying',
+    'Neat fold and packaging',
+    'Stain treatment at no extra cost'
+  ],
+  'dry-cleaning': [
+    'Specialized solvents for sensitive fabrics',
+    'Stain removal expertise',
+    'Color preservation techniques',
+    'Gentle pressing and finishing',
+    'Proper garment handling and storage'
+  ],
+  'ironing': [
+    'Professional-grade equipment',
+    'Steam treatment for stubborn wrinkles',
+    'Perfect creases and pleats',
+    'Specialized care for different fabrics',
+    'Careful attention to details and finishes'
+  ],
+  'express': [
+    'Same-day turnaround',
+    'Priority handling',
+    'SMS notifications',
+    'Express delivery options',
+    'Quality inspection before delivery'
+  ]
+};
+
+// Service icons for visual representation
+const getServiceIcon = (serviceId) => {
+  const icons = {
+    'wash-fold': '🧺',
+    'dry-cleaning': '👔',
+    'ironing': '🔥',
+    'express': '⚡'
+  };
+  return icons[serviceId] || '📦';
+};
+
+// Get feature list for a service
+const getServiceFeatures = (serviceId) => {
+  return serviceFeatures[serviceId] || [];
+};
+
+// Get sample pricing for preview (just show 3 items)
+const getSamplePricing = (serviceId) => {
+  return serviceItems[serviceId].slice(0, 3);
+};
+
 // State management
 const currentScreen = ref('services');
 const selectedService = ref(null);
+const selectedViewService = ref(null); // For displaying in the right column
 const currentItems = ref([]);
 const cart = ref([]);
 
@@ -166,6 +271,10 @@ const totalOrderCost = computed(() => {
 });
 
 // Methods
+function viewServiceDetails(service) {
+  selectedViewService.value = service;
+}
+
 function selectService(service) {
   selectedService.value = service;
   // Create a deep copy of the service items to avoid modifying the original data
@@ -227,6 +336,13 @@ function cancelOrder() {
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
+  color: #333;
+}
+
+.main-title {
+  text-align: center;
+  color: #0078d7;
+  margin-bottom: 0.5rem;
 }
 
 .intro-text {
@@ -236,118 +352,270 @@ function cancelOrder() {
   color: #555;
 }
 
-.service-screen {
-  text-align: center;
-}
-
-.service-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+/* Two-column layout */
+.content-columns {
+  display: flex;
   gap: 2rem;
-  margin: 2rem 0;
+  margin-top: 2rem;
 }
 
-.service-card {
+.column-title {
+  color: #0078d7;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  border-bottom: 2px solid #0078d7;
+  padding-bottom: 0.5rem;
+}
+
+/* Left column - Services List */
+.services-list-column {
+  flex: 1;
   background-color: #f9f9f9;
   border-radius: 10px;
   padding: 1.5rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  text-align: left;
-  transition: transform 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: 300px;
 }
 
-.service-card:hover {
-  transform: translateY(-5px);
+.services-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.service-card h3 {
+.service-list-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 8px;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.service-list-item:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.service-list-item.active {
+  background-color: #e6f2ff;
+  border-left: 4px solid #0078d7;
+}
+
+.service-icon {
+  font-size: 1.8rem;
+  margin-right: 1rem;
+}
+
+.service-list-name {
+  font-weight: 600;
+}
+
+/* Right column - Service Details */
+.service-details-column {
+  flex: 2;
+  background-color: white;
+  border-radius: 10px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.service-details {
+  height: 100%;
+}
+
+.service-title {
   color: #0078d7;
-  margin-bottom: 1rem;
-}
-
-.service-card p {
-  color: #555;
   margin-bottom: 1.5rem;
-  line-height: 1.5;
+  font-size: 1.8rem;
 }
 
-.service-button {
+.service-image {
+  height: 200px;
+  background-color: #f0f8ff;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(45deg, #e6f2ff, #ccdfff);
+}
+
+.service-icon-large {
+  font-size: 5rem;
+}
+
+.service-description {
+  line-height: 1.6;
+  margin-bottom: 2rem;
+  color: #444;
+}
+
+.service-features {
+  margin-bottom: 2rem;
+}
+
+.service-features h3 {
+  color: #0078d7;
+  margin-bottom: 0.75rem;
+}
+
+.service-features ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.service-features li {
+  padding: 0.5rem 0;
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.service-features li:before {
+  content: "✓";
+  color: #0078d7;
+  position: absolute;
+  left: 0;
+}
+
+.pricing-preview {
+  margin-bottom: 2rem;
+}
+
+.pricing-preview h3 {
+  color: #0078d7;
+  margin-bottom: 0.75rem;
+}
+
+.pricing-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.price-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.item-price {
+  font-weight: 600;
+  color: #0078d7;
+}
+
+.select-service-btn {
   padding: 0.75rem 1.5rem;
   background-color: #0078d7;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease;
   width: 100%;
+  transition: background-color 0.2s ease;
+  font-size: 1rem;
 }
 
-.service-button:hover {
+.select-service-btn:hover {
   background-color: #005a9e;
 }
 
+.no-service-selected {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.placeholder-message {
+  text-align: center;
+  color: #888;
+}
+
+.message-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+/* Cart Summary (moved to left column) */
 .cart-summary {
-  margin-top: 3rem;
+  margin-top: 2rem;
   padding: 1.5rem;
-  background-color: #f5f5f5;
+  background-color: white;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  text-align: left;
+}
+
+.cart-summary h3 {
+  color: #0078d7;
+  margin-bottom: 1rem;
 }
 
 .cart-item {
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #ddd;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #eee;
 }
 
 .cart-item h4 {
   margin-bottom: 0.5rem;
   color: #0078d7;
+  font-size: 0.95rem;
 }
 
 .cart-item-detail {
-  margin-left: 1rem;
-  line-height: 1.6;
+  margin-left: 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 .cart-total {
-  font-size: 1.3rem;
   font-weight: bold;
-  margin-top: 1.5rem;
+  margin: 1rem 0;
 }
 
 .action-buttons {
   display: flex;
-  justify-content: center;
-  gap: 1.5rem;
-  margin-top: 2rem;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.primary-button, .secondary-button {
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.9rem;
+  width: 100%;
 }
 
 .primary-button {
-  padding: 0.75rem 2rem;
   background-color: #0078d7;
   color: white;
   border: none;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  font-size: 1rem;
 }
 
 .secondary-button {
-  padding: 0.75rem 2rem;
   background-color: #f0f0f0;
   color: #333;
   border: 1px solid #ddd;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  font-size: 1rem;
 }
 
-/* Modal */
+/* Modal Styling (kept similar with slight improvements) */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -364,12 +632,27 @@ function cancelOrder() {
 .modal-box {
   background-color: white;
   border-radius: 12px;
-  padding: 2.5rem;
+  padding: 2rem;
   width: 90%;
   max-width: 700px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #888;
 }
 
 .modal-box h3 {
@@ -379,7 +662,7 @@ function cancelOrder() {
 
 .modal-box > p {
   color: #555;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   line-height: 1.5;
 }
 
@@ -457,6 +740,21 @@ function cancelOrder() {
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
-  margin-top: 2rem;
+  margin-top: 1.5rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .content-columns {
+    flex-direction: column;
+  }
+
+  .services-list-column, .service-details-column {
+    max-width: 100%;
+  }
+
+  .service-image {
+    height: 150px;
+  }
 }
 </style>
