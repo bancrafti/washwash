@@ -65,7 +65,7 @@
       </div>
 
       <div class="actions">
-        <button @click="startNewOrder" class="new-order-button">Start New Order</button>
+        <button @click="submitOrderToBackend"class="track-button" >Save Order</button>
         <button @click="trackOrder" class="track-button">Track Order</button>
       </div>
     </div>
@@ -75,6 +75,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import axios from 'axios';
 
 const router = useRouter();
 const cart = ref([]);
@@ -147,6 +148,32 @@ function startNewOrder() {
 
 function trackOrder() {
   alert(`Your order ${orderNumber.value} is being processed. You'll receive updates via SMS.`);
+}
+async function submitOrderToBackend() {
+  try {
+    const payload = {
+      orderNumber: orderNumber.value,
+      orderDate: new Date().toISOString(),
+      estimatedDeliveryDate: new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString(),
+      deliveryFee: deliveryFee.value,
+      subtotal: totalOrderCost.value,
+      grandTotal: grandTotal.value,
+      cart: cart.value
+    };
+
+    const response = await axios.post('http://localhost/washwash/backend/receipt.php', payload);
+
+     if (response.data.success) {
+      alert('Order saved successfully to backend! Redirecting to dashboard...')
+      setTimeout(() => {
+        router.push('/') // redirect to the dashboard
+      }, 2000) // 2-second delay
+    } else {
+      alert('Failed to save order: ' + response.data.message)
+    }
+  } catch (error) {
+    alert('Error saving order: ' + error.message)
+  }
 }
 </script>
 
