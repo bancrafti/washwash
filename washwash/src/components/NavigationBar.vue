@@ -14,7 +14,7 @@ const toggleMenu = () => {
 
     <!-- Desktop Navigation -->
     <div id="links" :class="{ 'open': isMenuOpen }">
-      <router-link to="/" active-class="active" @click="isMenuOpen = false">Home</router-link>
+      <router-link to="/home" active-class="active" @click="isMenuOpen = false">Home</router-link>
       <router-link to="/about" active-class="active" @click="isMenuOpen = false">About</router-link>
       <router-link to="/contact" active-class="active" @click="isMenuOpen = false">Contact</router-link>
     </div>

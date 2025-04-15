@@ -166,7 +166,7 @@ async function submitOrderToBackend() {
      if (response.data.success) {
       alert('Order saved successfully to backend! Redirecting to dashboard...')
       setTimeout(() => {
-        router.push('/') // redirect to the dashboard
+        router.push('/home') // redirect to the dashboard
       }, 2000) // 2-second delay
     } else {
       alert('Failed to save order: ' + response.data.message)
